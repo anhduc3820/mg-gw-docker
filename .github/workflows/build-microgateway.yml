@@ -1,18 +1,10 @@
 name: Build WSO2 Microgateway
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/microgateway
   MGW_VERSION: 3.2.0
-  # Link download chính thức từ WSO2 hoặc có thể dùng link mirror
-  # Thay đổi URL này nếu cần
   MGW_TOOLKIT_URL: https://github.com/wso2/product-microgateway/releases/download/v3.2.0/wso2am-micro-gw-toolkit-linux-3.2.0.zip
 
 jobs:
@@ -165,43 +157,21 @@ jobs:
   deploy-staging:
     needs: build-microgateway
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref_name == 'stg'
     environment: staging
 
     steps:
       - name: Deploy to Staging
         run: |
-          echo "🚀 Deploying to staging environment..."
-          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          
-          # Thêm deployment commands của bạn ở đây
-          # Ví dụ với kubectl:
-          # kubectl set image deployment/microgateway \
-          #   microgateway=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-          #   -n staging
-          
-          # Hoặc với docker-compose:
-          # export IMAGE_TAG=${{ github.sha }}
-          # docker-compose -f docker-compose.staging.yml up -d
-          
           echo "✅ Deployment to staging completed"
 
   deploy-production:
     needs: build-microgateway
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref_name == 'prod'
     environment: production
 
     steps:
       - name: Deploy to Production
         run: |
-          echo "🚀 Deploying to production environment..."
-          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          
-          # Thêm deployment commands của bạn ở đây
-          # Ví dụ với kubectl:
-          # kubectl set image deployment/microgateway \
-          #   microgateway=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-          #   -n production
-          
           echo "✅ Deployment to production completed"
