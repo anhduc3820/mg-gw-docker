@@ -15,4 +15,4 @@ COPY external-gw/target/external-gw.jar /home/exec/
 EXPOSE 9090 9095
 
 # Khởi chạy Microgateway với project folder đã copy
-CMD ["/bin/sh" "-c" "gateway /home/exec/external-gw.jar"]
+ENTRYPOINT ["gateway", "/home/exec/external-gw.jar"]
