@@ -110,7 +110,7 @@ jobs:
 
       - name: Build Microgateway Docker Image
         run: |
-          cd external-gw
+          ls -la
           echo "Building microgateway project..."
           micro-gw build external-gw
           
