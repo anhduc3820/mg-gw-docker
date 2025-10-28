@@ -4,9 +4,6 @@ FROM wso2/wso2micro-gw:3.2.8
 # Set working directory – theo hướng dẫn của WSO2 Microgateway
 WORKDIR /home/ballerina
 
-USER ballerina
-RUN |14 USER=ballerina USER_ID=802 USER_GROUP=ballerina
-
 EXPOSE 9090 9095
 
 # Copy project artifacts
