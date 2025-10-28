@@ -76,7 +76,6 @@ jobs:
           
           # Set permissions
           chmod +x wso2-toolkit/bin/micro-gw
-          chmod +x wso2-toolkit/bin/gateway
           
           # Verify installation
           echo "JAVA_HOME: $JAVA_HOME"
