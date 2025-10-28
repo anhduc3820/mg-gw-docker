@@ -1,3 +1,0 @@
-toolkit/lib/platform.zip filter=lfs diff=lfs merge=lfs -text
-toolkit/**/*.jar filter=lfs diff=lfs merge=lfs -text
-toolkit/**/*.zip filter=lfs diff=lfs merge=lfs -text
