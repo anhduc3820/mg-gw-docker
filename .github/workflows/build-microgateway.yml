@@ -1,0 +1,147 @@
+name: Build WSO2 Microgateway
+
+on:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/microgateway
+  MGW_VERSION: 3.2.0
+
+jobs:
+  build-microgateway:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Microgateway Toolkit from repo
+        run: |
+          # Toolkit đã có sẵn trong repo
+          chmod +x toolkit/bin/micro-gw
+          echo "MGW_TOOLKIT_HOME=$(pwd)/toolkit" >> $GITHUB_ENV
+          export PATH=$PATH:$(pwd)/toolkit/bin
+          micro-gw version
+
+      - name: Build Microgateway Project
+        run: |
+          export PATH=$PATH:${{ env.MGW_TOOLKIT_HOME }}/bin
+          
+          # Khởi tạo project nếu chưa có
+          if [ ! -d "microgateway-project" ]; then
+            micro-gw init microgateway-project
+          fi
+          
+          cd microgateway-project
+          
+          # Copy API definitions (giả sử bạn có file API definitions trong repo)
+          if [ -d "../api_definitions" ]; then
+            cp -r ../api_definitions/* ./api_definitions/
+          fi
+          
+          # Build project để tạo Docker image
+          micro-gw build microgateway-project
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Tag and Push Docker Image
+        run: |
+          # Tag image đã build với metadata
+          docker tag microgateway-project:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker tag microgateway-project:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          # Push tất cả tags
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            docker tag microgateway-project:latest $tag
+            docker push $tag
+          done
+
+      - name: Run Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Test Microgateway Container
+        run: |
+          # Chạy container để test
+          docker run -d --name test-mgw -p 9090:9090 -p 9095:9095 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          # Đợi container khởi động
+          sleep 30
+          
+          # Test health check
+          curl -k https://localhost:9095/health || true
+          
+          # Xem logs
+          docker logs test-mgw
+          
+          # Dừng và xóa container
+          docker stop test-mgw
+          docker rm test-mgw
+
+      - name: Generate Build Summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tags**: ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+
+  deploy-staging:
+    needs: build-microgateway
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Thêm logic deploy của bạn ở đây
+          # Ví dụ: kubectl, docker-compose, hoặc deployment script khác
+
+  deploy-production:
+    needs: build-microgateway
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to production environment..."
+          # Thêm logic deploy của bạn ở đây
