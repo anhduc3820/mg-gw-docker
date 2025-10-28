@@ -49,7 +49,6 @@ jobs:
           
           # Set permissions
           chmod +x toolkit/bin/micro-gw
-          chmod +x toolkit/bin/gateway
           
           # Verify setup
           echo "JAVA_HOME: $JAVA_HOME"
