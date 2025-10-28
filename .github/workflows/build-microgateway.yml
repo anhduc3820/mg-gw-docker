@@ -11,7 +11,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/microgateway
   MGW_VERSION: 3.2.0
-  MGW_TOOLKIT_URL: https://github.com/wso2/product-microgateway/releases/download/v3.2.0/wso2am-micro-gw-toolkit-linux-3.2.0.zip
+  # Link download chính thức từ WSO2 hoặc có thể dùng link mirror
+  # Thay đổi URL này nếu cần
+  MGW_TOOLKIT_URL: https://product-dist.wso2.com/downloads/api-manager/3.2.0/wso2am-micro-gw-toolkit-linux-3.2.0.zip
 
 jobs:
   build-microgateway:
@@ -41,10 +43,30 @@ jobs:
         if: steps.cache-toolkit.outputs.cache-hit != 'true'
         run: |
           echo "Downloading WSO2 Microgateway Toolkit v${{ env.MGW_VERSION }}..."
-          wget -q ${{ env.MGW_TOOLKIT_URL }} -O toolkit.zip
+          wget ${{ env.MGW_TOOLKIT_URL }} -O toolkit.zip
+          
+          echo "Extracting toolkit..."
           unzip -q toolkit.zip
-          mv wso2am-micro-gw-toolkit-${{ env.MGW_VERSION }} wso2-toolkit
+          
+          echo "Files after extraction:"
+          ls -la
+          
+          # Tìm thư mục đã extract (tên có thể khác)
+          TOOLKIT_DIR=$(find . -maxdepth 1 -type d -name "wso2am-micro-gw-toolkit*" | head -1)
+          
+          if [ -z "$TOOLKIT_DIR" ]; then
+            echo "Error: Could not find extracted toolkit directory"
+            echo "Contents of current directory:"
+            ls -la
+            exit 1
+          fi
+          
+          echo "Found toolkit directory: $TOOLKIT_DIR"
+          mv "$TOOLKIT_DIR" wso2-toolkit
           rm toolkit.zip
+          
+          echo "Toolkit structure:"
+          ls -la wso2-toolkit/
           echo "Download completed!"
 
       - name: Setup Microgateway Toolkit
