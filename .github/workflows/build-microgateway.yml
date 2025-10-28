@@ -126,13 +126,12 @@ jobs:
           # Nếu file jar đã được tạo => build thành công
           if [ -f "Dockerfile" ]; then
             echo "✅ Dockerfile exist."
+            docker build -t external-mgw .
             exit 0
           else
             echo "❌ Build failed. Dockerfile not found Exit code: $EXIT_CODE"
             exit $EXIT_CODE
           fi
-
-          docker build -t external-mgw .
 
       - name: Test Microgateway Container
         run: |
