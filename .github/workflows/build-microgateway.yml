@@ -13,7 +13,7 @@ env:
   MGW_VERSION: 3.2.0
   # Link download chính thức từ WSO2 hoặc có thể dùng link mirror
   # Thay đổi URL này nếu cần
-  MGW_TOOLKIT_URL: https://github.com/wso2/product-microgateway/releases/download/v3.2.10/wso2am-micro-gw-toolkit-linux-3.2.10.zip
+  MGW_TOOLKIT_URL: https://github.com/wso2/product-microgateway/releases/download/v3.2.0/wso2am-micro-gw-toolkit-linux-3.2.0.zip
 
 jobs:
   build-microgateway:
